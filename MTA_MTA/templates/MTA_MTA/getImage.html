@@ -1,0 +1,5 @@
+{% block getImage}
+<canvas id="intImg" width="300" height="300" style="border:1px solid #d3d3d3; float: left; margin-left: 20px">
+    <img src="{% url 'webgateway.views.render_image' imageId z 0 %}">
+</canvas>
+{% endblock %}

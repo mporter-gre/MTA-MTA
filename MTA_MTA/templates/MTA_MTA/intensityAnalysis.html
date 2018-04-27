@@ -1,0 +1,259 @@
+{% extends "webgateway/base/container3.html" %}
+
+
+{% block link %}
+{{ block.super }}
+<style type="text/css">
+    .viewport {
+        height: 500px;
+        width: 800px;
+        padding: 10px;
+    }
+    .bar rect {
+          fill: steelblue;
+        }
+        
+    .bar text {
+        fill: #fff;
+        font: 10px sans-serif;
+    }
+</style>
+{% endblock %}  <!--end block link -->
+
+{% block script %}
+{{ block.super }}
+<script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
+<script>
+    $(window).on("load", function(){
+        var WEBGATEWAY = {};
+        WEBGATEWAY.URLS = {};
+        WEBGATEWAY.URLS.webindex = "{% url 'webgateway.views.index' %}";
+        var dsContainerHTML = '';
+        var dsId = '{{ datasetId }}';
+        var dsURL = '/api/v0/m/datasets/' + dsId
+        var dsJSON = $.getJSON(dsURL, function(dsData) {
+            var imagesURL = '/api/v0/m/datasets/' + dsId + '/images/';
+            var imagesJSON = $.getJSON(imagesURL, function(imagesData){
+                var dsContainer = document.getElementById('datasetContainer');
+                var numImg = imagesData.meta.totalCount;
+                for (thisImg = 0; thisImg < numImg; thisImg++) {
+                    var imgId = imagesData.data[thisImg]['@id'];
+                    var imgName = imagesData.data[thisImg].Name;
+                    dsContainerHTML += '<img class="thumb" onclick=loadImage(' + imgId + ') src="' + WEBGATEWAY.URLS.webindex + 'render_thumbnail/' + 
+                        imgId + '"' + ' id="' + imgId + '"><br/>' + imgName + '<br/><br/>';
+                };
+                dsContainer.innerHTML = dsContainerHTML;
+            }); 
+        });
+    }); 
+
+    $(document).ready(function() {
+        $('#datasetContainer').click(function(){
+            // var imgId = $(this).attr('id');
+            console.log('clicked');
+
+        });
+    });
+
+    function loadImage(iid) {
+        var webindex = "{% url 'webgateway.views.index' %}";
+        var imageURL = "/api/v0/m/images/" + iid;
+        console.log(imageURL);
+        var imageInfo = $.getJSON(imageURL, function(imageInfo) {
+            var numZ = imageInfo.data.Pixels.SizeZ;
+            var numC = imageInfo.data.Pixels.SizeC;
+            var z = Math.floor(numZ/2);
+            var zSection = document.getElementById('zSection');
+            var channel = document.getElementById('channel');
+            zSection.setAttribute('max', numZ);
+            zSection.setAttribute('value', z);
+            zSection.setAttribute('onchange', 'changeZ()');
+            channel.setAttribute('max', numC);
+            channel.setAttribute('value', 1);
+            var canvas = document.getElementById('intImgCanvas');
+            var ctx = canvas.getContext('2d');
+            var imgData = new Image();
+            imgData.addEventListener('load', function() {
+                ctx.drawImage(imgData, 0, 0, 300, 300);
+                }, false);
+
+            imgData.src = webindex + "render_image/" + iid + "/" + z + "/0";
+            canvas.className = iid;
+            });
+    ;}
+
+    function changeZ() {
+        var webindex = "{% url 'webgateway.views.index' %}";
+        // var z = zSection.getAttribute('value');
+        var z = $('#zSection').val()-1;
+        var c = $('#channel').val()-1;
+        console.log(z)
+        var intCanvas = document.getElementById('intImgCanvas');
+        var iid = intCanvas.className;
+        var ctx = intCanvas.getContext('2d');
+            var imgData = new Image();
+            imgData.addEventListener('load', function() {
+                ctx.drawImage(imgData, 0, 0, 300, 300);
+                }, false);
+
+            imgData.src = webindex + "render_image/" + iid + "/" + z + "/" + c;
+        // Match the segmentation panel to the intensity panel
+        segment();
+
+    }
+    
+    function segment() {
+        var intCanvas = document.getElementById('intImgCanvas');
+        var iid = intCanvas.className;
+        var z = $('#zSection').val()-1;
+        var c = $('#channel').val()-1;
+        var minSize = $('#minSize').val();
+        var segURL = "/MTA_MTA/segmentImage/" + iid + "/" + z + "/" + c + "/0/" + minSize; // Add t
+        var segCanvas = document.getElementById('segImgCanvas');
+        var ctx = segCanvas.getContext('2d');
+        var imgData = new Image();
+        imgData.addEventListener('load', function() {
+            ctx.drawImage(imgData, 0, 0, 300, 300);
+            }, false);
+
+        imgData.src = segURL;
+        segImgCanvas.className = iid;
+    };
+
+    function measure() {
+        var intCanvas = document.getElementById('intImgCanvas');
+        var iid = intCanvas.className;
+        var c = $('#channel').val()-1;
+        var minSize = $('#minSize').val();
+        measureURL = "/MTA_MTA/measure/" + iid + "/" + c + "/" + minSize;
+        data = $.getJSON(measureURL, function(data){
+            tbl = document.getElementById('dataTbl');
+            tblHTML = "<tr><th>Mean Intensity</th><th>Num Px</th>"
+            numObj = data.length;
+            var chartData = new Array
+            var chartLabels = new Array
+            for (thisObj = 0; thisObj < numObj; thisObj++){
+                tblHTML += "<tr><td>" + data[thisObj].meanInt + "</td><td>" + 
+                            data[thisObj].area + "</td></tr>"
+                chartData.push(parseFloat(data[thisObj].meanInt));
+                chartLabels.push('');
+            }
+            tbl.innerHTML = tblHTML;
+            drawChart(chartData);
+        });
+        
+    }
+
+    function drawChart(chartData, chartLabels) {
+        // var ctx = document.getElementById("chartCanvas").getContext("2d");
+        numObj = chartData.length
+        var data = chartData;
+        var min = Math.min.apply(Math, data);
+        var max = Math.max.apply(Math, data);
+        var formatCount = d3.format(",.2r");
+        var svg = d3.select("svg"),
+            margin = {top: 10, right: 30, bottom: 30, left: 30},
+            width = +svg.attr("width") - margin.left - margin.right,
+            height = +svg.attr("height") - margin.top - margin.bottom,
+            g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var x = d3.scaleLinear()
+            .domain([min, max])
+            .rangeRound([0, width]);
+
+        var bins = d3.histogram()
+            .domain(x.domain())
+            .thresholds(x.ticks(20))
+            (data);
+
+        var y = d3.scaleLinear()
+            .domain([0, d3.max(bins, function(d) { return d.length; })])
+            .range([height, 0]);
+
+        var bar = g.selectAll(".bar")
+        .data(bins)
+        .enter().append("g")
+            .attr("class", "bar")
+            .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(d.length) + ")"; });
+
+        bar.append("rect")
+            .attr("x", 1)
+            .attr("width", x(bins[0].x1) - x(bins[0].x0) - 1)
+            .attr("height", function(d) { return height - y(d.length); });
+
+        bar.append("text")
+            .attr("dy", ".75em")
+            .attr("y", 6)
+            .attr("x", (x(bins[0].x1) - x(bins[0].x0)) / 2)
+            .attr("text-anchor", "middle")
+            .text(function(d) { return formatCount(d.length); });
+
+        g.append("g")
+            .attr("class", "axis axis--x")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+    }
+
+    
+
+
+
+</script>
+
+
+{% endblock %}  <!--end block script -->
+
+
+
+{% block content %}
+{{ block.super }}
+
+
+{% block left %}
+{{ block.super }}
+
+<div id='datasetContainer'>
+    
+</div>
+
+{% endblock %}  <!--end block left -->
+
+{% block center %}
+
+<div id='segWorkDiv' style="width: 1000px; margin: 10px">
+    <div id='intImgDiv'>
+        <canvas id='intImgCanvas' width="300" height="300" style="border:1px solid #d3d3d3; float: left"></canvas>
+    </div>
+    <div id='segToolsDiv' style="float: left">
+        <button type="button" onclick="segment()">Segment</button>
+        <input type="number" id="zSection" min="1" style="width:35px">
+        <input type="number" id="channel" min="1" style="width:35px">
+        <input type="number" id="minSize" min="1" value="30" style="width:35px">
+        <button type="button" onclick="measure()">Measure</button>
+    </div>
+
+    <div id='segImgDiv' style="float: left">
+        <canvas id='segImgCanvas' height="300" style="border:1px solid #d3d3d3; float: right"></canvas>
+    </div>
+
+</div>
+
+<div id="outputDiv" style="clear: left">
+    <div id="dataDiv">
+        <table id="dataTbl" style="margin: 10px; float: left;"></table>
+        <!--<canvas id="chartCanvas" style="margin: 10px; float: right; width: 400px; height: 400px"></canvas>-->
+        <svg id="svgPanel" width="960" height="500"></svg>
+    </div>
+</div>
+
+
+{% endblock %}  <!--end block center -->
+
+
+{% block right %}
+    <p>Right column content</p>
+{% endblock %}  <!--end block right -->
+
+
+{% endblock %}  <!--end block content -->
+

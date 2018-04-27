@@ -1,0 +1,16 @@
+<ul>
+    {{ for project in projects }}
+    <li style="list-style-type:circle" id='{{ project.id }}'>{{ project.name }}
+        <!--<ul>
+            {{ for dataset in datasets }}
+            <li style="list-style-type:circle" id='{{ dataset.id }}'>dataset.name</li>
+            <ul>
+                {{ for image in images }}
+                <li style="list-style-type:circle" id='image.id'>image.name</li>
+                {{ endfor }}
+            </ul>
+            {{ endfor }}
+        </ul>-->
+    </li>
+    {{ endfor }}
+</ul>

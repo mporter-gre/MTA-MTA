@@ -1,0 +1,111 @@
+{% extends "webgateway/base/container2.html" %}
+
+{% block link %}
+{{ block.super }}
+<style type="text/css">
+    .viewport {
+        height: 500px;
+        width: 800px;
+        padding: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block script %}
+{{ block.super }}
+<script>
+    function doIt() {
+        var canvas = document.getElementById('intImg');
+        var ctx = canvas.getContext('2d');
+        var image = document.getElementById('sourceImg');
+        
+        
+        ctx.drawImage(image, 0, 0, 300, 300);
+        //var c1 = document.getElementById("intImg");
+        //var ctx1 = c1.getContext("2d");
+        //ctx1.fillStyle = "#FF0000";
+        //ctx1.fillRect(20, 20, 150, 100);
+
+        var c2 = document.getElementById("segImg");
+        var ctx2 = c2.getContext("2d");
+        ctx2.fillStyle = "#00FF00";
+        ctx2.fillRect(20, 20, 150, 100);
+    }
+</script>
+
+<script>
+        $(document).ready(function(){
+            $("#diffZ").click(function(){
+                    var zSelect = document.getElementById('zSelect');
+                    var z = zSelect.value;
+                    //console.log(typeof z);
+                    //var canvas = document.getElementById('intImg');
+                    //var ctx = canvas.getContext('2d');
+                    //var imgData = new Image();
+                    //imgData.addEventListener('load', function() {
+                    //    ctx.drawImage(imgData, 0, 0, 300, 300);
+                    //    }, false);
+                    //imgData.src = "{% url 'webgateway.views.render_image' imageId 20 0 %}";
+                    //console.log(typeof imgData);
+                    //console.log(imgData);
+
+                $.ajax({
+                    url: '/getImage',
+                    type: 'get',
+                    data: { "z": $("zSelect").value},
+                    success: function(data) {
+                    //var canvas = document.getElementById('intImg');
+                    //var ctx = canvas.getContext('2d');
+                    //var imgData = new Image();
+                    //imgData.addEventListener('load', function() {
+                        //ctx.drawImage(imgData, 0, 0, 300, 300);
+                        //}, false);
+                    
+                    
+                },
+            });
+            
+            })
+        });
+</script>
+
+{% endblock %}
+
+
+
+{% block content %}
+{{ block.super }}
+
+{% block right %}
+    <p>Right column content</p>
+{% endblock %}
+
+
+{% block center %}
+
+<button type="button" id="doIt" onclick="doIt()">Do it</button> <br/>
+<button type="button" id="diffZ">diffZ</button>
+<div id="segDiv" style="height: 300px; width: 900px">
+{% block getImage %}{% endblock %}
+<!--<img id="sourceImg" src="{% url 'webgateway.views.render_image' imageId 25 0 %}">-->
+<div id="segControls">
+    <form action="/changeZ/" method="POST" id="zForm">
+    <select id = 'zSelect'>
+        <option value='10'>10</option>
+        <option value='20'>20</option>
+        <option value='30'>30</option>
+    </select>
+    <button type="button" form="zForm" value="submit"></button>
+</div> <br />
+<canvas id="segImg" width="300" height="300" style="border:1px solid #d3d3d3; float: right"></canvas>
+</div>
+
+{% endblock %}
+
+
+{% endblock %}
+
+
+
+
+

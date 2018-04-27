@@ -1,0 +1,71 @@
+{% extends "webgateway/base/container2.html" %}
+
+{% block link %}
+{{ block.super }}
+<style type="text/css">
+    .viewport {
+        height: 500px;
+        width: 800px;
+        padding: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block script %}
+{{ block.super }}
+<script>
+    function doIt() {
+        var canvas = document.getElementById('intImg');
+        var ctx = canvas.getContext('2d');
+        var imgData = new Image();
+        imgData.addEventListener('load', function() {
+            ctx.drawImage(imgData, 0, 0, 300, 300);
+            }, false);
+        imgData.src = "{% url 'webgateway.views.render_image' imageId z 0 %}";
+    }
+</script>
+
+
+{% endblock %}
+
+
+
+{% block content %}
+{{ block.super }}
+
+{% block right %}
+    <p>Right column content</p>
+{% endblock %}
+
+
+{% block center %}
+
+<button type="button" id="doIt" onclick="doIt()">Do it</button> <br/>
+
+<div id="segDiv" style="height: 300px; width: 900px">
+    <canvas id="intImg" width="300" height="300" style="border:1px solid #d3d3d3; float: left"></canvas>
+
+
+<div id="segControls">
+    <form action="/changeZ/" method="POST" id="zForm">
+    <select id = 'zSelect'>
+        <option value='10'>10</option>
+        <option value='20'>20</option>
+        <option value='30'>30</option>
+    </select>
+    <button type="button" value="submit">Submit</button>
+    </form>
+    
+</div> <br />
+<canvas id="segImg" width="300" height="300" style="border:1px solid #d3d3d3; float: right"></canvas>
+</div>
+
+{% endblock %}
+
+
+{% endblock %}
+
+
+
+
+

@@ -1,0 +1,150 @@
+{% extends "webgateway/base/container3.html" %}
+
+{% block link %}
+{{ block.super }}
+<style type="text/css">
+    .viewport {
+        height: 500px;
+        width: 800px;
+        padding: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block script %}
+{{ block.super }}
+<script>
+    
+
+
+
+    $(document).ready(function(){
+
+            $('#dataTree li').click(function(){
+                var projId = $(this).attr('id');
+                var elId = document.getElementById(projId);
+                var cl = elId.getAttribute('class');
+                console.log(cl);
+                if (cl == 'project') {
+                    var projText = elId.innerText;
+                    var datasetsURL = '/api/v0/m/projects/' + projId + '/datasets/';
+                    var datasetsJSON = $.getJSON(datasetsURL, function(data) {
+                        var numDs = data.meta.totalCount;
+                        var dsList = '';
+                        for (thisDs = 0; thisDs < numDs; thisDs++) {
+                            var id = data.data[thisDs]['@id'];
+                            var name = data.data[thisDs].Name;
+                            dsList += '<li class="dataset" id="' + id + '">' + name + '</li>';
+                        };
+                        var newHTML = '<li id="' + projId + '">' + projText + '<ul>' + dsList + '</ul></li>';
+                        elId.innerHTML = newHTML;
+                    });
+                };
+            });
+        });
+/*
+
+                
+                // console.log(datasetsJSON.data);
+                // var datasetsParsed = JSON.stringify(datasetsJSON.data);
+                // console.log(datasetsParsed); // .responseJSON.data);
+                // var WEBGATEWAY = {};
+                // WEBGATEWAY.URLS = {};
+                // WEBGATEWAY.URLS.webindex = "{% url 'webgateway.views.index' %}";
+                // console.log(WEBGATEWAY.URLS.webindex);
+                // WEBGATEWAY.URLS.listProjects = "{% url 'webgateway.views.listProjects_json' %}";
+                // var projectsURL = "http://localhost:4080/api/v0/m/projects/?owner=1&group=3";
+                // var projectsJSON = $.getJSON(projectsURL);
+                // var projects = JSON.parse(projectsJSON.response);
+                // console.log(projects)
+                // var projData = $.getJSON(listProjects);
+                // console.log(projData);
+
+                // var tree = "{{ loadTree }}";
+                // var treeJSON = JSON.stringify(tree);
+                // console.log(treeJSON);
+                // console.log('check');
+                // var dataTree = document.getElementById('dataTree');
+                // dataTree.innerHTML = "";
+            // })
+
+            $("#diffZ").click(function(){
+                var WEBGATEWAY = {};
+                WEBGATEWAY.URLS = {};
+                WEBGATEWAY.URLS.webindex = "{% url 'webgateway.views.index' %}";
+                var canvas = document.getElementById('intImg');
+                var zSelect = document.getElementById('zSelect');
+                var z = zSelect.value;
+
+
+                var ctx = canvas.getContext('2d');
+                var imgData = new Image();
+                imgData.addEventListener('load', function() {
+                    ctx.drawImage(imgData, 0, 0, 300, 300);
+                    }, false);
+
+                imgData.src = WEBGATEWAY.URLS.webindex + "render_image/3823317/" + z + "/0/";
+                
+            })
+        })*/
+</script>
+
+
+{% endblock %}
+
+
+
+{% block content %}
+{{ block.super }}
+
+
+{% block left %}
+{{ block.super }}
+
+<ul id="dataTree">
+       {% for p in projects %}
+       <li class="project" id='{{p.id}}'>{{p.name}}</li>
+       {% endfor %}
+</ul>
+
+
+{% endblock %}  <!--end block left -->
+
+{% block center %}
+
+<button type="button" id="loadTree">Load tree</button> <br/>
+<button type="button" id="doIt" onclick="doIt()">Do it</button> <br/>
+<button type="button" id="diffZ">DiffZ</button> <br/>
+
+<div id="segDiv" style="height: 300px; width: 900px">
+    <canvas id="intImg" width="300" height="300" style="border:1px solid #d3d3d3; float: left"></canvas>
+
+
+<div id="segControls">
+    <form action="/changeZ/" method="POST" id="zForm">
+    <select id = 'zSelect'>
+        <option value='10'>10</option>
+        <option value='20'>20</option>
+        <option value='30'>30</option>
+    </select>
+    <button type="button" value="submit">Submit</button>
+    </form>
+    
+</div>
+<canvas id="segImg" width="300" height="300" style="border:1px solid #d3d3d3; float: right"></canvas>
+</div>
+
+{% endblock %}  <!--end block center -->
+
+
+{% block right %}
+    <p>Right column content</p>
+{% endblock %}  <!--end block right -->
+
+
+{% endblock %}  <!--end block content -->
+
+
+
+
+
